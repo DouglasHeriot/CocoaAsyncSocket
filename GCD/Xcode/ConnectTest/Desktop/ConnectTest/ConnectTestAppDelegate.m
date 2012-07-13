@@ -51,7 +51,7 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
 	}
 	#else
 	{
-		NSString *host = @"deusty.com";
+		NSString *host = @"google.com";
 		uint16_t port = 80;
 	
 		
@@ -141,12 +141,12 @@ static const int ddLogLevel = LOG_LEVEL_INFO;
 
 - (void)socket:(GCDAsyncSocket *)sock didWriteDataWithTag:(long)tag
 {
-	DDLogInfo(@"socket:%p didWriteDataWithTag:%d", sock, tag);
+	DDLogInfo(@"socket:%p didWriteDataWithTag:%ld", sock, tag);
 }
 
 - (void)socket:(GCDAsyncSocket *)sock didReadData:(NSData *)data withTag:(long)tag
 {
-	DDLogInfo(@"socket:%p didReadData:withTag:%d", sock, tag);
+	DDLogInfo(@"socket:%p didReadData:withTag:%ld", sock, tag);
 }
 
 - (void)socketDidDisconnect:(GCDAsyncSocket *)sock withError:(NSError *)err
