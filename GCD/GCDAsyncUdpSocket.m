@@ -24,6 +24,8 @@
 #import <sys/types.h>
 
 
+// Logging is turned off
+// It does actually significantly slow us down under heavy load (hundreds of DMX universe inputs)
 #if 0
 
 // Logging Enabled - See log level below
@@ -32,7 +34,7 @@
 // http://code.google.com/p/cocoalumberjack/
 // 
 // It allows us to do a lot of logging without significantly slowing down the code.
-#import "DDLog.h"
+#import "CocoaLumberjack/DDLog.h"
 
 #define LogAsync   NO
 #define LogContext 65535
@@ -428,7 +430,7 @@ enum GCDAsyncUdpSocketConfig
 	}
 	else
 	{
-		__block id result = nil;
+		__block id result;
 		
 		dispatch_sync(socketQueue, ^{
 			result = delegate;
@@ -473,7 +475,7 @@ enum GCDAsyncUdpSocketConfig
 	}
 	else
 	{
-		__block dispatch_queue_t result = NULL;
+		__block dispatch_queue_t result;
 		
 		dispatch_sync(socketQueue, ^{
 			result = delegateQueue;
@@ -655,7 +657,7 @@ enum GCDAsyncUdpSocketConfig
 
 - (BOOL)isIPv4Preferred
 {
-	__block BOOL result = NO;
+	__block BOOL result;
 	
 	dispatch_block_t block = ^{
 		result = (config & kPreferIPv4) ? YES : NO;
@@ -671,7 +673,7 @@ enum GCDAsyncUdpSocketConfig
 
 - (BOOL)isIPv6Preferred
 {
-	__block BOOL result = NO;
+	__block BOOL result;
 	
 	dispatch_block_t block = ^{
 		result = (config & kPreferIPv6) ? YES : NO;
@@ -687,7 +689,7 @@ enum GCDAsyncUdpSocketConfig
 
 - (BOOL)isIPVersionNeutral
 {
-	__block BOOL result = NO;
+	__block BOOL result;
 	
 	dispatch_block_t block = ^{
 		result = (config & (kPreferIPv4 | kPreferIPv6)) == 0;
@@ -819,7 +821,7 @@ enum GCDAsyncUdpSocketConfig
 
 - (id)userData
 {
-	__block id result = nil;
+	__block id result;
 	
 	dispatch_block_t block = ^{
 		
@@ -1857,11 +1859,22 @@ SetParamPtrsAndReturn:
 		}
 		
 		int reuseaddr = 1;
-		status = setsockopt(socketFD, SOL_SOCKET, SO_REUSEPORT, &reuseaddr, sizeof(reuseaddr));
+		status = setsockopt(socketFD, SOL_SOCKET, SO_REUSEADDR, &reuseaddr, sizeof(reuseaddr));
 		if (status == -1)
 		{
 			if (errPtr)
 				*errPtr = [self errnoErrorWithReason:@"Error enabling address reuse (setsockopt)"];
+			
+			close(socketFD);
+			return SOCKET_NULL;
+		}
+		
+		int reuseport = 1;
+		status = setsockopt(socketFD, SOL_SOCKET, SO_REUSEPORT, &reuseport, sizeof(reuseport));
+		if (status == -1)
+		{
+			if (errPtr)
+				*errPtr = [self errnoErrorWithReason:@"Error enabling port reuse (setsockopt)"];
 			
 			close(socketFD);
 			return SOCKET_NULL;
@@ -2286,7 +2299,7 @@ SetParamPtrsAndReturn:
 
 - (NSData *)localAddress_IPv4
 {
-	__block NSData *result = nil;
+	__block NSData *result;
 	
 	dispatch_block_t block = ^{
 		
@@ -2304,7 +2317,7 @@ SetParamPtrsAndReturn:
 
 - (NSString *)localHost_IPv4
 {
-	__block NSString *result = nil;
+	__block NSString *result;
 	
 	dispatch_block_t block = ^{
 		
@@ -2322,7 +2335,7 @@ SetParamPtrsAndReturn:
 
 - (uint16_t)localPort_IPv4
 {
-	__block uint16_t result = 0;
+	__block uint16_t result;
 	
 	dispatch_block_t block = ^{
 		
@@ -2340,7 +2353,7 @@ SetParamPtrsAndReturn:
 
 - (NSData *)localAddress_IPv6
 {
-	__block NSData *result = nil;
+	__block NSData *result;
 	
 	dispatch_block_t block = ^{
 		
@@ -2358,7 +2371,7 @@ SetParamPtrsAndReturn:
 
 - (NSString *)localHost_IPv6
 {
-	__block NSString *result = nil;
+	__block NSString *result;
 	
 	dispatch_block_t block = ^{
 		
@@ -2376,7 +2389,7 @@ SetParamPtrsAndReturn:
 
 - (uint16_t)localPort_IPv6
 {
-	__block uint16_t result = 0;
+	__block uint16_t result;
 	
 	dispatch_block_t block = ^{
 		
@@ -2455,7 +2468,7 @@ SetParamPtrsAndReturn:
 
 - (NSData *)connectedAddress
 {
-	__block NSData *result = nil;
+	__block NSData *result;
 	
 	dispatch_block_t block = ^{
 		
@@ -2473,7 +2486,7 @@ SetParamPtrsAndReturn:
 
 - (NSString *)connectedHost
 {
-	__block NSString *result = nil;
+	__block NSString *result;
 	
 	dispatch_block_t block = ^{
 		
@@ -2491,7 +2504,7 @@ SetParamPtrsAndReturn:
 
 - (uint16_t)connectedPort
 {
-	__block uint16_t result = 0;
+	__block uint16_t result;
 	
 	dispatch_block_t block = ^{
 		
@@ -2509,7 +2522,7 @@ SetParamPtrsAndReturn:
 
 - (BOOL)isConnected
 {
-	__block BOOL result = NO;
+	__block BOOL result;
 	
 	dispatch_block_t block = ^{
 		result = (flags & kDidConnect) ? YES : NO;
@@ -2542,7 +2555,7 @@ SetParamPtrsAndReturn:
 
 - (BOOL)isIPv4
 {
-	__block BOOL result = NO;
+	__block BOOL result;
 	
 	dispatch_block_t block = ^{
 		
@@ -2566,7 +2579,7 @@ SetParamPtrsAndReturn:
 
 - (BOOL)isIPv6
 {
-	__block BOOL result = NO;
+	__block BOOL result;
 	
 	dispatch_block_t block = ^{
 		
@@ -3919,6 +3932,11 @@ SetParamPtrsAndReturn:
 {
 	LogTrace();
 	
+	do
+	{
+		@autoreleasepool
+		{
+			
 	if ((flags & kReceive) == 0)
 	{
 		LogVerbose(@"Receiving is paused...");
@@ -4126,15 +4144,16 @@ SetParamPtrsAndReturn:
 		if (!(flags & kSock6CanAcceptBytes)) {
 			[self resumeSend6Source];
 		}
+		return;
 	}
 	else if (error)
 	{
 		[self closeWithError:error];
+		return;
 	}
-	else
-	{
-		[self doReceive];
+		}
 	}
+	while(1);
 }
 
 - (void)doReceiveEOF
